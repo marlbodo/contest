@@ -84,7 +84,9 @@
 <script>
     const SUPABASE_URL = "https://gbgazkerfzjosdmofbbs.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_6KtLr5szF6-qhqZz5-K1MA_bvEDPkp0";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function uploadImage(file, folderName) {
         if (!file) return null;
@@ -92,7 +94,7 @@
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `${folderName}/${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const { data, error } = await supabaseClient.storage
             .from('problem-images')
             .upload(filePath, file);
 
@@ -101,7 +103,7 @@
             throw error;
         }
 
-        const { data: publicUrlData } = supabase.storage
+        const { data: publicUrlData } = supabaseClient.storage
             .from('problem-images')
             .getPublicUrl(filePath);
 
@@ -130,7 +132,7 @@
                 uploadImage(sFile, 'solutions')
             ]);
 
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('problems')
                 .insert([
                     {
