@@ -4,18 +4,29 @@
     <meta charset="UTF-8">
     <title>문제 등록</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, input[type="text"], input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-container { display: flex; justify-content: space-between; margin-top: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; }
-        .btn-submit { background-color: #28a745; color: white; }
-        .btn-submit:hover { background-color: #218838; }
-        .btn-back { background-color: #6c757d; color: white; }
-        .btn-back:hover { background-color: #5a6268; }
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #343a40;
+            --text-sub: #6c757d;
+            --primary: #5c7cfa;
+            --primary-hover: #4c6ef5;
+            --border-color: #e9ecef;
+        }
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; margin: 0; padding: 40px 20px; background-color: var(--bg-color); color: var(--text-main); }
+        .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 35px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        h1 { font-size: 22px; font-weight: 600; text-align: center; margin-top: 0; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 13px; color: var(--text-sub); }
+        select, input[type="text"], input[type="file"] { width: 100%; padding: 10px 12px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: #fff; color: var(--text-main); transition: border-color 0.2s; }
+        select:focus, input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        input[type="file"] { padding: 8px; background: #f8f9fa; cursor: pointer; }
+        .btn-container { display: flex; gap: 10px; margin-top: 30px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; text-decoration: none; text-align: center; transition: background 0.2s; }
+        .btn-submit { background-color: var(--primary); color: white; box-shadow: 0 2px 4px rgba(92, 124, 250, 0.2); }
+        .btn-submit:hover { background-color: var(--primary-hover); }
+        .btn-back { background-color: #e9ecef; color: var(--text-main); }
+        .btn-back:hover { background-color: #dee2e6; }
     </style>
 </head>
 <body>
@@ -48,17 +59,17 @@
         </div>
 
         <div class="form-group">
-            <label for="hint_img">힌트 이미지</label>
+            <label for="hint_img">힌트 이미지 (선택)</label>
             <input type="file" id="hint_img" accept="image/*">
         </div>
 
         <div class="form-group">
-            <label for="answer_img">정답 이미지</label>
+            <label for="answer_img">정답 이미지 (선택)</label>
             <input type="file" id="answer_img" accept="image/*">
         </div>
 
         <div class="form-group">
-            <label for="solution_img">솔루션 이미지</label>
+            <label for="solution_img">솔루션 이미지 (선택)</label>
             <input type="file" id="solution_img" accept="image/*">
         </div>
 
@@ -71,8 +82,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const SUPABASE_URL = "https://gbgazkerfzjosdmofbbs.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_6KtLr5szF6-qhqZz5-K1MA_bvEDPkp0";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function uploadImage(file, folderName) {
