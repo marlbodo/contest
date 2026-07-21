@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 등록</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input[type="text"], input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-container { display: flex; justify-content: space-between; margin-top: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; }
+        .btn-submit { background-color: #28a745; color: white; }
+        .btn-submit:hover { background-color: #218838; }
+        .btn-back { background-color: #6c757d; color: white; }
+        .btn-back:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✏️ 새 문제 등록</h1>
+    <form id="writeForm">
+        <div class="form-group">
+            <label for="grade">학년 / 구분 선택</label>
+            <select id="grade" required>
+                <option value="">-- 선택하세요 --</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+                <option value="4">4학년</option>
+                <option value="5">5학년</option>
+                <option value="6">6학년</option>
+                <option value="7">공통</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" id="title" placeholder="문제 제목을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="question_img">문제 이미지</label>
+            <input type="file" id="question_img" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+            <label for="hint_img">힌트 이미지</label>
+            <input type="file" id="hint_img" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label for="answer_img">정답 이미지</label>
+            <input type="file" id="answer_img" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label for="solution_img">솔루션 이미지</label>
+            <input type="file" id="solution_img" accept="image/*">
+        </div>
+
+        <div class="btn-container">
+            <a href="index.html" class="btn btn-back">돌아가기</a>
+            <button type="submit" class="btn btn-submit" id="submitBtn">등록하기</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function uploadImage(file, folderName) {
+        if (!file) return null;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${folderName}/${fileName}`;
+
+        const { data, error } = await supabase.storage
+            .from('problem-images')
+            .upload(filePath, file);
+
+        if (error) {
+            alert(`이미지 업로드 실패 (${file.name}): ` + error.message);
+            throw error;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+            .from('problem-images')
+            .getPublicUrl(filePath);
+
+        return publicUrlData.publicUrl;
+    }
+
+    document.getElementById('writeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '등록 중...';
+
+        try {
+            const grade = parseInt(document.getElementById('grade').value);
+            const title = document.getElementById('title').value;
+
+            const qFile = document.getElementById('question_img').files[0];
+            const hFile = document.getElementById('hint_img').files[0];
+            const aFile = document.getElementById('answer_img').files[0];
+            const sFile = document.getElementById('solution_img').files[0];
+
+            const [qUrl, hUrl, aUrl, sUrl] = await Promise.all([
+                uploadImage(qFile, 'questions'),
+                uploadImage(hFile, 'hints'),
+                uploadImage(aFile, 'answers'),
+                uploadImage(sFile, 'solutions')
+            ]);
+
+            const { error } = await supabase
+                .from('problems')
+                .insert([
+                    {
+                        grade: grade,
+                        title: title,
+                        question_image_url: qUrl,
+                        hint_image_url: hUrl,
+                        answer_image_url: aUrl,
+                        solution_image_url: sUrl
+                    }
+                ]);
+
+            if (error) throw error;
+
+            alert('문제가 성공적으로 등록되었습니다!');
+            location.href = 'index.html';
+
+        } catch (err) {
+            console.error(err);
+            alert('등록 중 오류가 발생했습니다.');
+            submitBtn.disabled = false;
+            submitBtn.innerText = '등록하기';
+        }
+    });
+</script>
+</body>
+</html>
