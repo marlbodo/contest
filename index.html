@@ -59,10 +59,12 @@
     <script>
         const SUPABASE_URL = "https://gbgazkerfzjosdmofbbs.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_6KtLr5szF6-qhqZz5-K1MA_bvEDPkp0";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchProblems() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('problems')
                 .select('id, grade, title, question_image_url')
                 .order('id', { ascending: false });
