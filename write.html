@@ -59,18 +59,8 @@
         </div>
 
         <div class="form-group">
-            <label for="hint_img">힌트 이미지 (선택)</label>
-            <input type="file" id="hint_img" accept="image/*">
-        </div>
-
-        <div class="form-group">
             <label for="answer_img">정답 이미지 (선택)</label>
             <input type="file" id="answer_img" accept="image/*">
-        </div>
-
-        <div class="form-group">
-            <label for="solution_img">솔루션 이미지 (선택)</label>
-            <input type="file" id="solution_img" accept="image/*">
         </div>
 
         <div class="btn-container">
@@ -121,15 +111,11 @@
             const title = document.getElementById('title').value;
 
             const qFile = document.getElementById('question_img').files[0];
-            const hFile = document.getElementById('hint_img').files[0];
             const aFile = document.getElementById('answer_img').files[0];
-            const sFile = document.getElementById('solution_img').files[0];
 
-            const [qUrl, hUrl, aUrl, sUrl] = await Promise.all([
+            const [qUrl, aUrl] = await Promise.all([
                 uploadImage(qFile, 'questions'),
-                uploadImage(hFile, 'hints'),
-                uploadImage(aFile, 'answers'),
-                uploadImage(sFile, 'solutions')
+                uploadImage(aFile, 'answers')
             ]);
 
             const { error } = await supabaseClient
@@ -139,9 +125,7 @@
                         grade: grade,
                         title: title,
                         question_image_url: qUrl,
-                        hint_image_url: hUrl,
-                        answer_image_url: aUrl,
-                        solution_image_url: sUrl
+                        answer_image_url: aUrl
                     }
                 ]);
 
