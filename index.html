@@ -4,42 +4,61 @@
     <meta charset="UTF-8">
     <title>문제 관리 - 전체 리스트</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
-        h1 { color: #333; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn { padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .btn:hover { background-color: #0056b3; }
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
-        th { background-color: #007bff; color: white; }
-        tr:hover { background-color: #f1f1f1; cursor: pointer; }
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #343a40;
+            --text-sub: #6c757d;
+            --primary: #5c7cfa;
+            --primary-hover: #4c6ef5;
+            --border-color: #e9ecef;
+        }
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; margin: 0; padding: 40px 20px; background-color: var(--bg-color); color: var(--text-main); }
+        .wrapper { max-width: 900px; margin: auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        h1 { font-size: 24px; font-weight: 600; margin: 0; }
+        .btn { padding: 10px 18px; background-color: var(--primary); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 14px; transition: background 0.2s; box-shadow: 0 2px 4px rgba(92, 124, 250, 0.2); }
+        .btn:hover { background-color: var(--primary-hover); }
+        .table-container { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        th { background-color: #f1f3f5; color: var(--text-sub); font-weight: 600; text-align: center; }
+        td { text-align: center; color: var(--text-main); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #fcfcfc; cursor: pointer; }
+        .thumb { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); background: #f1f3f5; }
+        .empty { text-align: center; color: var(--text-sub); padding: 40px; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <h1>📚 문제 전체 리스트</h1>
-        <a href="write.html" class="btn">➕ 새 문제 등록하기</a>
-    </div>
+    <div class="wrapper">
+        <div class="top-bar">
+            <h1>📚 문제 전체 리스트</h1>
+            <a href="write.html" class="btn">+ 새 문제 등록하기</a>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>학년 / 구분</th>
-                <th>제목 (Title)</th>
-                <th>문제 이미지 미리보기</th>
-            </tr>
-        </thead>
-        <tbody id="problem-list">
-            <tr><td colspan="4">데이터를 불러오는 중...</td></tr>
-        </tbody>
-    </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th style="width: 120px;">학년 / 구분</th>
+                        <th>제목 (Title)</th>
+                        <th style="width: 120px;">문제 미리보기</th>
+                    </tr>
+                </thead>
+                <tbody id="problem-list">
+                    <tr><td colspan="4" class="empty">데이터를 불러오는 중...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = "https://gbgazkerfzjosdmofbbs.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_6KtLr5szF6-qhqZz5-K1MA_bvEDPkp0";
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchProblems() {
@@ -52,12 +71,12 @@
             tbody.innerHTML = '';
 
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="4" style="color:red;">에러 발생: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="empty" style="color:#fa5252;">에러 발생: ${error.message}</td></tr>`;
                 return;
             }
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4">등록된 문제가 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="empty">등록된 문제가 없습니다.</td></tr>`;
                 return;
             }
 
@@ -65,14 +84,13 @@
                 const tr = document.createElement('tr');
                 tr.onclick = () => { location.href = `view.html?id=${item.id}`; };
                 
-                // grade가 7이면 '공통', 그 외에는 'X학년'으로 표시
                 const gradeText = item.grade === 7 ? '공통' : `${item.grade}학년`;
 
                 tr.innerHTML = `
                     <td>${item.id}</td>
-                    <td>${gradeText}</td>
-                    <td>${item.title || '(제목 없음)'}</td>
-                    <td><img src="${item.question_image_url}" width="80" style="max-height:50px; object-fit:contain;" onerror="this.src='https://via.placeholder.com/80?text=No+Image'"></td>
+                    <td><span style="background: #edf2ff; color: #3b5bdb; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${gradeText}</span></td>
+                    <td style="font-weight: 500; text-align: left;">${item.title || '(제목 없음)'}</td>
+                    <td><img src="${item.question_image_url}" class="thumb" onerror="this.src='https://via.placeholder.com/60?text=-'"></td>
                 `;
                 tbody.appendChild(tr);
             });
