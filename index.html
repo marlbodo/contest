@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 관리 - 전체 리스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        h1 { color: #333; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn { padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .btn:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        tr:hover { background-color: #f1f1f1; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1>📚 문제 전체 리스트</h1>
+        <a href="write.html" class="btn">➕ 새 문제 등록하기</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>학년 / 구분</th>
+                <th>제목 (Title)</th>
+                <th>문제 이미지 미리보기</th>
+            </tr>
+        </thead>
+        <tbody id="problem-list">
+            <tr><td colspan="4">데이터를 불러오는 중...</td></tr>
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchProblems() {
+            const { data, error } = await supabase
+                .from('problems')
+                .select('id, grade, title, question_image_url')
+                .order('id', { ascending: false });
+
+            const tbody = document.getElementById('problem-list');
+            tbody.innerHTML = '';
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color:red;">에러 발생: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4">등록된 문제가 없습니다.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => { location.href = `view.html?id=${item.id}`; };
+                
+                // grade가 7이면 '공통', 그 외에는 'X학년'으로 표시
+                const gradeText = item.grade === 7 ? '공통' : `${item.grade}학년`;
+
+                tr.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${gradeText}</td>
+                    <td>${item.title || '(제목 없음)'}</td>
+                    <td><img src="${item.question_image_url}" width="80" style="max-height:50px; object-fit:contain;" onerror="this.src='https://via.placeholder.com/80?text=No+Image'"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        fetchProblems();
+    </script>
+</body>
+</html>
