@@ -80,6 +80,8 @@
 
     async function uploadImage(file, folderName) {
         if (!file) return null;
+        
+        // 한글 파일명 및 띄어쓰기로 인한 오류를 방지하기 위해 확장자만 추출 후 고유 영문 이름 생성
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `${folderName}/${fileName}`;
@@ -136,7 +138,6 @@
 
         } catch (err) {
             console.error(err);
-            alert('등록 중 오류가 발생했습니다.');
             submitBtn.disabled = false;
             submitBtn.innerText = '등록하기';
         }
