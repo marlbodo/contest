@@ -10,6 +10,8 @@
             --text-main: #343a40;
             --text-sub: #6c757d;
             --primary: #5c7cfa;
+            --danger: #fa5252;
+            --danger-hover: #e03131;
             --border-color: #e9ecef;
         }
         body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; margin: 0; padding: 40px 20px; background-color: var(--bg-color); color: var(--text-main); }
@@ -21,8 +23,12 @@
         .section h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; font-weight: 600; color: var(--text-main); }
         .img-box img { max-width: 100%; height: auto; border: 1px solid var(--border-color); border-radius: 8px; background: #f8f9fa; display: block; }
         .no-img { color: #adb5bd; font-style: italic; font-size: 14px; }
-        .btn { padding: 10px 18px; background-color: #e9ecef; color: var(--text-main); text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 14px; display: inline-block; transition: background 0.2s; }
-        .btn:hover { background-color: #dee2e6; }
+        .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        .btn { padding: 10px 18px; border-radius: 8px; font-weight: 500; font-size: 14px; text-decoration: none; display: inline-block; transition: background 0.2s; border: none; cursor: pointer; }
+        .btn-back { background-color: #e9ecef; color: var(--text-main); }
+        .btn-back:hover { background-color: #dee2e6; }
+        .btn-delete { background-color: var(--danger); color: white; }
+        .btn-delete:hover { background-color: var(--danger-hover); }
     </style>
 </head>
 <body>
@@ -30,9 +36,6 @@
 <div class="container">
     <div id="content">
         <p style="color: var(--text-sub);">로딩 중...</p>
-    </div>
-    <div style="margin-top: 30px;">
-        <a href="index.html" class="btn">← 목록으로 돌아가기</a>
     </div>
 </div>
 
@@ -46,6 +49,9 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const problemId = urlParams.get('id');
+
+    // 전역 변수로 현재 문제의 데이터 보관 (삭제 시 이미지 경로 활용)
+    let currentProblemData = null;
 
     async function fetchProblemDetail() {
         const container = document.getElementById('content');
@@ -66,6 +72,7 @@
             return;
         }
 
+        currentProblemData = data;
         const gradeText = data.grade === 7 ? '공통' : `${data.grade}학년`;
 
         container.innerHTML = `
@@ -94,7 +101,78 @@
                 <h3>📖 솔루션 이미지</h3>
                 <div class="img-box">${data.solution_image_url ? `<img src="${data.solution_image_url}" alt="솔루션 이미지">` : '<span class="no-img">등록된 이미지 없음</span>'}</div>
             </div>
+
+            <div class="btn-group">
+                <a href="index.html" class="btn btn-back">← 목록으로</a>
+                <button onclick="deleteProblem()" class="btn btn-delete">🗑️ 이 문제 삭제하기</button>
+            </div>
         `;
+    }
+
+    // URL에서 스토리지 파일 경로(파일명)를 추출하는 헬퍼 함수
+    function extractFilePath(url) {
+        if (!url) return null;
+        try {
+            // public URL 구조 예: .../storage/v1/object/public/problem-images/questions/filename.png
+            const parts = url.split('/problem-images/');
+            return parts.length > 1 ? parts[1] : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function deleteProblem() {
+        const confirmed = confirm("정말 이 문제를 삭제하시겠습니까?\n관련된 진도 기록 및 첨부파일이 모두 삭제되며 복구할 수 없습니다.");
+        if (!confirmed) return;
+
+        try {
+            // 1. user_progress 테이블에서 해당 문제(problem_id 또는 문제와 연관된 컬럼명에 맞게 수정 가능) 데이터 삭제
+            // ※ user_progress 테이블의 문제 식별 컬럼명이 problem_id라고 가정합니다. 다른 경우 컬럼명을 맞춰주세요.
+            const { error: progressError } = await supabaseClient
+                .from('user_progress')
+                .delete()
+                .eq('problem_id', problemId);
+
+            // user_progress에 데이터가 없을 수도 있으므로 에러가 나더라도 치명적이지 않다면 무시하거나 로그만 남김
+            if (progressError) {
+                console.warn('user_progress 삭제 중 특이사항 발생 (무시 가능):', progressError.message);
+            }
+
+            // 2. Storage에 업로드된 파일들 삭제
+            const urls = [
+                currentProblemData.question_image_url,
+                currentProblemData.hint_image_url,
+                currentProblemData.answer_image_url,
+                currentProblemData.solution_image_url
+            ];
+
+            const filePaths = urls.map(extractFilePath).filter(path => path !== null);
+
+            if (filePaths.length > 0) {
+                const { error: storageError } = await supabaseClient.storage
+                    .from('problem-images')
+                    .remove(filePaths);
+
+                if (storageError) {
+                    console.warn('스토리지 파일 삭제 중 에러 발생:', storageError.message);
+                }
+            }
+
+            // 3. problems 테이블에서 문제 데이터 삭제
+            const { error: problemError } = await supabaseClient
+                .from('problems')
+                .delete()
+                .eq('id', problemId);
+
+            if (problemError) throw problemError;
+
+            alert('문제가 성공적으로 삭제되었습니다.');
+            location.href = 'index.html';
+
+        } catch (err) {
+            console.error(err);
+            alert('삭제 중 오류가 발생했습니다: ' + err.message);
+        }
     }
 
     fetchProblemDetail();
